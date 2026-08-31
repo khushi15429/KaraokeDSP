@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="KaraokeDSP/KaraokeDSP.vcxproj" Id="fed7c4b0-43a9-4a0d-9032-0dc647120219" />
+</Solution>

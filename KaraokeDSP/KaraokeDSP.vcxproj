@@ -1,0 +1,276 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{fed7c4b0-43a9-4a0d-9032-0dc647120219}</ProjectGuid>
+    <RootNamespace>KaraokeDSP</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <Keyword>QtVS_v304</Keyword>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(QtMsBuild)\qt_defaults.props" Condition="Exists('$(QtMsBuild)\qt_defaults.props')" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <QtModules>core;gui;multimedia;multimediawidgets</QtModules>
+    <QtInstall>6.6.2_msvc2019_64</QtInstall>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') OR !Exists('$(QtMsBuild)\Qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>D:\Swaraagya Software\portaudio\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>D:\Swaraagya Software\portaudio\include;$(IncludePath)</IncludePath>
+    <TargetName>KaraokeDSP_v15</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;$(ProjectDir)\ThirdParty\FFmpeg\include;$(ProjectDir)\ThirdParty\RubberBand\include;C:\Qt\6.6.2\msvc2019_64\include;C:\Qt\6.6.2\msvc2019_64\include\QtMultimediaWidgets;$(ProjectDir)ThirdParty\PortAudio\include;C:\Qt\6.6.2\msvc2019_64\include\QtWidgets;C:\Qt\6.6.2\msvc2019_64\include\QtMultimedia;$(ProjectDir);$(ProjectDir)DSP;$(ProjectDir)UI;$(ProjectDir)PitchShifter;$(ProjectDir)AudioEngine;$(ProjectDir)AudioIO;C:\Qt\6.6.2\msvc2019_64\include\QtCore;C:\Qt\6.6.2\msvc2019_64\include\QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>portaudio_static_x64.lib;avcodec.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;rubberband-static.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Multimedia.lib;Qt6MultimediaWidgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\28-07-2026\Swaraagya Software\portaudio\build\Release;$(ProjectDir)\ThirdParty\FFmpeg\lib;$(ProjectDir)\ThirdParty\RubberBand\lib;$(ProjectDir)ThirdParty\PortAudio\lib;C:\Qt\6.6.2\msvc2019_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;$(ProjectDir)\ThirdParty\FFmpeg\include;$(ProjectDir)\ThirdParty\RubberBand\include;C:\Qt\6.6.2\msvc2019_64\include;C:\Qt\6.6.2\msvc2019_64\include\QtMultimediaWidgets;$(ProjectDir)ThirdParty\PortAudio\include;C:\Qt\6.6.2\msvc2019_64\include\QtWidgets;C:\Qt\6.6.2\msvc2019_64\include\QtMultimedia;$(ProjectDir);$(ProjectDir)DSP;$(ProjectDir)UI;$(ProjectDir)PitchShifter;$(ProjectDir)AudioEngine;$(ProjectDir)AudioIO;C:\Qt\6.6.2\msvc2019_64\include\QtCore;C:\Qt\6.6.2\msvc2019_64\include\QtGui;$(ProjectDir)dsp;$(ProjectDir)PitchDetector;$(ProjectDir)PitchAnalyzer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>portaudio_static_x64.lib;avcodec.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;rubberband-static.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Multimedia.lib;Qt6MultimediaWidgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\28-07-2026\Swaraagya Software\portaudio\build\Release;$(ProjectDir)\ThirdParty\FFmpeg\lib;$(ProjectDir)\ThirdParty\RubberBand\lib;$(ProjectDir)ThirdParty\PortAudio\lib;C:\Qt\6.6.2\msvc2019_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="AudioEngine\AudioEngine.h" />
+    <ClInclude Include="AudioIO\AudioBuffer.h" />
+    <ClInclude Include="AudioIO\AudioDeviceManager.h" />
+    <QtMoc Include="UI\PlayerWidget.h" />
+    <ClInclude Include="AudioIO\AudioStream.h" />
+    <ClInclude Include="AudioIO\PerformanceAnalyzer.h" />
+    <ClInclude Include="AudioIO\PitchComparisonEngine.h" />
+    <ClInclude Include="AudioIO\PitchMetrics.h" />
+    <ClInclude Include="AudioIO\SongAnalyzer.h" />
+    <ClInclude Include="AudioIO\SPSCQueue.h" />
+    <ClInclude Include="AudioIO\TargetMelodyLoader.h" />
+    <ClInclude Include="AudioIO\TargetPitchTimeline.h" />
+    <ClInclude Include="AudioIO\UserVoiceAnalyzer.h" />
+    <ClInclude Include="AudioIO\VoiceComparison.h" />
+    <ClInclude Include="AudioIO\WavWriter.h" />
+    <ClInclude Include="DSP\AudioMixer.h" />
+    <ClInclude Include="DSP\BeatDetector.h" />
+    <ClInclude Include="DSP\Compressor.h" />
+    <ClInclude Include="DSP\KeyDetector.h" />
+    <ClInclude Include="DSP\Limiter.h" />
+    <ClInclude Include="DSP\NoiseGate.h" />
+    <QtMoc Include="KaraokeDSPDashboard.h" />
+    <ClInclude Include="DSP\PitchCorrector.h" />
+    <ClInclude Include="DSP\ScaleLocker.h" />
+    <ClInclude Include="DSP\Vocalharmonicenhancer.h" />
+    <ClInclude Include="DSP\VocalReverb.h" />
+    <ClInclude Include="DSP\VocalSaturation.h" />
+    <ClInclude Include="DSP\VocalWarmthEQ.h" />
+    <ClInclude Include="DSP\YinPitchDetector.h" />
+    <ClInclude Include="KeyScaleMatcher\KeyScaleMatcher.h" />
+    <ClInclude Include="NoiseSuppressor\Noisesuppressor.h" />
+    <ClInclude Include="PitchShifter\PitchhiSfter.h" />
+    <ClInclude Include="PitchAnalyzer\PitchAnalyzer.h" />
+    <ClInclude Include="PitchDetector\PitchDetector.h" />
+    <ClInclude Include="PitchShifter\PitchShifter.h" />
+    <ClInclude Include="PitchWorker\PitchWorker.h" />
+    <ClInclude Include="Player\AudioPlayer.h" />
+    <ClInclude Include="Player\FFmpegDecoder.h" />
+    <ClInclude Include="Reverb\Reverb.h" />
+    <ClInclude Include="UI\EffectsWidget.h" />
+    <QtMoc Include="UI\MixerWidget.h" />
+    <QtMoc Include="UI\PitchWidget.h" />
+    <ClCompile Include="AudioIO\PerformanceAnalyzer.cpp" />
+    <ClCompile Include="AudioIO\PitchComparisonEngine.cpp" />
+    <ClCompile Include="AudioIO\TargetMelodyLoader.cpp" />
+    <ClCompile Include="AudioIO\TargetPitchTimeline.cpp" />
+    <ClCompile Include="AudioIO\VoiceComparison.cpp" />
+    <ClCompile Include="DSP\YinPitchDetector.cpp" />
+    <ClCompile Include="UI\PlayerWidget.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AudioEngine\AudioEngine.cpp" />
+    <ClCompile Include="AudioIO\AudioBuffer.cpp" />
+    <ClCompile Include="AudioIO\AudioDeviceManager.cpp" />
+    <ClCompile Include="AudioIO\AudioStream.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="AudioIO\WavWriter.cpp" />
+    <ClCompile Include="DSP\AudioMixer.cpp" />
+    <ClCompile Include="DSP\Compressor.cpp">
+    </ClCompile>
+    <ClCompile Include="DSP\Limiter.cpp" />
+    <ClCompile Include="DSP\NoiseGate.cpp" />
+    <ClCompile Include="KaraokeDSPDashboard.cpp" />
+    <ClCompile Include="NoiseSuppressor\Noisesuppressor .cpp" />
+    <ClCompile Include="PitchShifter\PitchShifter.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PitchAnalyzer\PitchAnalyzer.cpp" />
+    <ClCompile Include="PitchDetector\PitchDetector.cpp" />
+    <ClCompile Include="PitchWorker\PitchWorker.cpp" />
+    <ClCompile Include="Player\AudioPlayer.cpp" />
+    <ClCompile Include="Player\FFmpegDecoder.cpp" />
+    <ClCompile Include="Reverb\Reverb.cpp" />
+    <ClCompile Include="UI\MixerWidget.cpp" />
+    <ClCompile Include="UI\PitchWidget.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sample_melody.json" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(QtMsBuild)\qt.targets" Condition="Exists('$(QtMsBuild)\qt.targets')" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

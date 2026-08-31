@@ -1,0 +1,27 @@
+{
+  "songTitle": "Test Karaoke Track",
+  "bpm": 120,
+  "notes": [
+    {
+      "start": 1.00,
+      "end": 2.00,
+      "midi": 60,
+      "hz": 261.63,
+      "vibrato": false
+    },
+    {
+      "start": 2.00,
+      "end": 3.00,
+      "midi": 64,
+      "hz": 329.63,
+      "vibrato": false
+    },
+    {
+      "start": 3.00,
+      "end": 4.50,
+      "midi": 69,
+      "hz": 440.00,
+      "vibrato": true
+    }
+  ]
+}
