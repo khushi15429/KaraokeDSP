@@ -10,7 +10,11 @@
 #include "../DSP/Compressor.h"
 #include "../DSP/VocalWarmthEQ.h"
 #include "../DSP/VocalHarmonicEnhancer.h"
+#include "../DSP/AirSheenFilter.h"
+#include "../DSP/VocalDoubler.h"
+#include "../DSP/SlapbackDelay.h"
 #include <vector>
+#include <deque>
 #include <memory>
 #include <cstdint>
 #include <mutex>
@@ -26,6 +30,8 @@
 #include <QMediaDevices>
 
 class AudioStream : public QObject {
+    Q_OBJECT
+
 public:
     struct LiveRawFrame {
         double timestampSec = 0.0;
@@ -67,7 +73,7 @@ public:
     void pushSongBuffer(const std::vector<float>& buffer);
     void pushSongBuffer(const float* data, int sampleCount);
     void ClearSongBuffer();
-    const std::vector<float>& GetOutputBuffer() const;
+    std::vector<float> GetOutputBuffer() const;
     AudioBuffer* GetSongBuffer() noexcept { return m_audioBuffer; }
     int GetSampleRate() const noexcept { return m_sampleRate; }
     int GetChannelCount() const noexcept { return m_audioFormat.channelCount(); }
@@ -131,7 +137,7 @@ private:
     std::vector<float> m_pitchInputHistory;
     std::vector<float> m_processedPitchHistory;
 
-    std::vector<float> m_outputBuffer;
+    std::deque<float> m_outputBuffer; // std::deque for O(1) pops from front
     mutable std::mutex m_songBufferMutex;
     AudioBuffer* m_audioBuffer = nullptr;
 
@@ -148,8 +154,8 @@ private:
     const TargetPitchTimeline* m_targetTimeline = nullptr;
     std::string m_targetJsonPath;
     std::string m_songPath;
-    double m_songPosition = 0.0;                 // coarse QMediaPlayer video position (display only; no longer authoritative)
-    uint64_t m_playbackClockFrames = 0;          // P1: sample-accurate audio clock (frames processed since Start()); authoritative timeline position
+    double m_songPosition = 0.0;                 // coarse QMediaPlayer video position
+    uint64_t m_playbackClockFrames = 0;          // sample-accurate audio clock
     float m_correctionStrength = 1.0f;
     bool m_melodyCorrectionEnabled = false;
     float m_currentCorrectionSemitones = 0.0f;
@@ -161,10 +167,13 @@ private:
     float m_reverbMix = 0.25f;
 
     Compressor m_compressor;
-    VocalWarmthEQ m_vocalEQ; // VOICE-ENHANCEMENT ITEM 6: multi-band presence/clarity EQ
-    VocalHarmonicEnhancer m_harmonicEnhancer; // ITEMS 3b/3c: exciter + saturation
-    double m_smoothedPitchHz = 0.0;   // ITEM 1/5: EMA-tracked slow pitch drift
-    bool m_correctionActive = false;  // ITEM 7: hysteresis state
+    VocalWarmthEQ m_vocalEQ;                     // multi-band presence/clarity EQ
+    AirSheenFilter m_airSheen;
+    VocalDoubler m_vocalDoubler;
+    SlapbackDelay m_slapbackDelay;
+    VocalHarmonicEnhancer m_harmonicEnhancer;     // exciter + saturation
+    double m_smoothedPitchHz = 0.0;               // EMA-tracked slow pitch drift
+    bool m_correctionActive = false;              // hysteresis state
     bool m_compressorEnabled = false;
 
     uint64_t m_framesProcessed = 0;

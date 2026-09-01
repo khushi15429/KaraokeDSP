@@ -76,16 +76,21 @@ private:
     float m_x1 = 0, m_x2 = 0, m_y1 = 0, m_y2 = 0;
 };
 
-// VOICE-ENHANCEMENT ITEM 6: multi-band EQ chain for vocal presence/clarity.
-// Stages run in series: LowCut -> MudDip -> Presence -> Brightness.
+// VOICE-ENHANCEMENT: multi-band EQ chain for vocal warmth, formant clarity, and presence.
+// Stages run in series: LowCut -> LowMidBoost -> FormantBody -> FormantClarity ->
+// Formant3-4kHz -> Presence4-5kHz -> Brightness.
 class VocalWarmthEQ {
 public:
     void Initialize(int sampleRate) {
         m_sampleRate = sampleRate;
         m_lowCut.Configure(BiquadStage::Type::HighPass, sampleRate, 90.0f, 0.0f, 0.707f);
         m_lowMidBoost.Configure(BiquadStage::Type::Peaking, sampleRate, 200.0f, 2.0f, 1.0f);
-        m_mudDip.Configure(BiquadStage::Type::Peaking, sampleRate, 300.0f, -1.0f, 1.4f);
-        m_presence.Configure(BiquadStage::Type::Peaking, sampleRate, 4000.0f, 2.5f, 1.0f);
+        // FORMANT ENHANCEMENT (per latest spec) -- replaces the old flat mud-dip cut in
+        // this same region, since a cut there would fight the new body boost.
+        m_formantBody.Configure(BiquadStage::Type::Peaking, sampleRate, 350.0f, 2.0f, 1.2f);      // 300-400 Hz: voice body
+        m_formantClarity.Configure(BiquadStage::Type::Peaking, sampleRate, 1200.0f, 2.5f, 1.0f);  // 1000-1500 Hz: clarity
+        m_formant3to4k.Configure(BiquadStage::Type::Peaking, sampleRate, 3500.0f, 2.0f, 1.2f);    // 3000-4000 Hz: presence/formant
+        m_presence.Configure(BiquadStage::Type::Peaking, sampleRate, 4500.0f, 2.5f, 1.0f);        // 4000-5000 Hz: presence boost
         m_brightness.Configure(BiquadStage::Type::HighShelf, sampleRate, 8000.0f, 2.0f, 0.707f);
     }
 
@@ -96,7 +101,9 @@ public:
         float s = sample;
         s = m_lowCut.Process(s);
         s = m_lowMidBoost.Process(s);
-        s = m_mudDip.Process(s);
+        s = m_formantBody.Process(s);
+        s = m_formantClarity.Process(s);
+        s = m_formant3to4k.Process(s);
         s = m_presence.Process(s);
         s = m_brightness.Process(s);
         return s;
@@ -107,7 +114,9 @@ private:
     bool m_enabled = true;
     BiquadStage m_lowCut;
     BiquadStage m_lowMidBoost;
-    BiquadStage m_mudDip;
+    BiquadStage m_formantBody;
+    BiquadStage m_formantClarity;
+    BiquadStage m_formant3to4k;
     BiquadStage m_presence;
     BiquadStage m_brightness;
 };

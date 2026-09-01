@@ -111,9 +111,6 @@
     <ClInclude Include="AudioIO\SongAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AudioIO\AudioStream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AudioIO\UserVoiceAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -127,6 +124,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DSP\Vocalharmonicenhancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DSP\AirSheenFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DSP\VocalDoubler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DSP\SlapbackDelay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -227,6 +233,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="KaraokeDSPDashboard.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="AudioIO\AudioStream.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

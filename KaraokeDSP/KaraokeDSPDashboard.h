@@ -75,6 +75,7 @@ private:
     void analyzeVocalsFile(const QString& vocalsPath);
     void onComparisonReportReady(bool success, const QString& jsonPath, const QString& message = QString());
     void showVoiceComparisonReport();
+    void restartSongDecoderForMixer();
 
     QAudioDecoder* m_songDecoder = nullptr;
     QAudioDecoder* m_vocalsDecoder = nullptr;

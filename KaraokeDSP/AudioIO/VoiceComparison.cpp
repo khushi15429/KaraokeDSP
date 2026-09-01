@@ -122,7 +122,7 @@ bool VoiceComparison::GenerateComparisonReport(
 	}
 
 	out << "{\n";
-	out << "  \"report_version\": \"2.0\",\n";
+	out << "  \"report_version\": \"2.1\",\n";
 	out << "  \"accuracy_definition\": \"" << JsonEscape(outSummary.accuracyDefinition) << "\",\n";
 	out << "  \"thresholds_cents\": { \"very_good\": " << tolVeryGood
 		<< ", \"good\": " << tolGood << ", \"acceptable\": " << tolAccept << " },\n";
@@ -150,14 +150,9 @@ bool VoiceComparison::GenerateComparisonReport(
 		const bool hasTarget = target.isVoiced && ValidHz(target.targetHz);
 		const bool hasRaw = rf.voiced && ValidHz(rf.rawFreqHz);
 
-		// DYNAMIC FALLBACK: Calculate processed pitch if real-time detection buffer missed it
-		double actualFinalHz = rf.finalFreqHz;
-		bool hasFinal = rf.finalVoiced && ValidHz(actualFinalHz);
-
-		if (!hasFinal && hasRaw) {
-			actualFinalHz = rf.rawFreqHz * std::pow(2.0, static_cast<double>(rf.totalAppliedSemitones) / 12.0);
-			hasFinal = ValidHz(actualFinalHz);
-		}
+		// Measured only: processed-vocal monitor tap. Never substitute math or target Hz.
+		const double actualFinalHz = rf.finalFreqHz;
+		const bool hasFinal = rf.finalVoiced && ValidHz(actualFinalHz);
 
 		if (hasTarget) {
 			++targetMatches;
@@ -223,13 +218,25 @@ bool VoiceComparison::GenerateComparisonReport(
 		else if (status == "SLIGHTLY_SHARP") ++outSummary.slightlySharpFrames;
 		else if (status == "SHARP") ++outSummary.sharpFrames;
 
-		const int targetMidi = target.midiNote > 0 ? target.midiNote : FrequencyToMidi(target.targetHz);
-		const std::string targetNote = target.noteName[0] ? std::string(target.noteName) : MidiToNoteName(targetMidi);
-		const int rawMidi = rf.midiNote > 0 ? rf.midiNote : FrequencyToMidi(rf.rawFreqHz);
-		const std::string rawNote = rf.noteName[0] ? std::string(rf.noteName) : MidiToNoteName(rawMidi);
+		const int targetMidi = hasTarget
+			? (target.midiNote > 0 ? target.midiNote : FrequencyToMidi(target.targetHz))
+			: 0;
+		const std::string targetNote = hasTarget
+			? (target.noteName[0] ? std::string(target.noteName) : MidiToNoteName(targetMidi))
+			: std::string("---");
+		const int rawMidi = hasRaw
+			? (rf.midiNote > 0 ? rf.midiNote : FrequencyToMidi(rf.rawFreqHz))
+			: 0;
+		const std::string rawNote = hasRaw
+			? (rf.noteName[0] ? std::string(rf.noteName) : MidiToNoteName(rawMidi))
+			: std::string("---");
 
-		const int finalMidi = hasFinal ? FrequencyToMidi(actualFinalHz) : 0;
-		const std::string finalNote = hasFinal ? MidiToNoteName(finalMidi) : "---";
+		const int finalMidi = hasFinal
+			? (rf.finalMidi > 0 ? rf.finalMidi : FrequencyToMidi(actualFinalHz))
+			: 0;
+		const std::string finalNote = hasFinal
+			? (rf.finalNoteName[0] ? std::string(rf.finalNoteName) : MidiToNoteName(finalMidi))
+			: std::string("---");
 
 		double expectedHz = 0.0;
 		bool hasExpected = false;
@@ -245,21 +252,33 @@ bool VoiceComparison::GenerateComparisonReport(
 		out << "      \"timestamp_sec\": " << std::fixed << std::setprecision(3) << tsec << ",\n";
 		out << "      \"timestamp_ms\": " << static_cast<int>(std::round(tsec * 1000.0)) << ",\n";
 
+		out << "      \"target\": { \"frequency_hz\": ";
+		WriteOptionalNumber(out, target.targetHz, hasTarget);
+		out << ", \"midi\": ";
+		if (hasTarget) out << targetMidi; else out << "null";
+		out << ", \"note\": \"" << JsonEscape(targetNote)
+			<< "\", \"voiced\": " << (hasTarget ? "true" : "false") << " },\n";
 		out << "      \"reference\": { \"frequency_hz\": ";
 		WriteOptionalNumber(out, target.targetHz, hasTarget);
-		out << ", \"note\": \"" << JsonEscape(hasTarget ? targetNote : std::string("---"))
-			<< "\", \"midi\": " << (hasTarget ? targetMidi : 0)
-			<< ", \"voiced\": " << (hasTarget ? "true" : "false") << " },\n";
+		out << ", \"note\": \"" << JsonEscape(targetNote)
+			<< "\", \"midi\": ";
+		if (hasTarget) out << targetMidi; else out << "null";
+		out << ", \"voiced\": " << (hasTarget ? "true" : "false") << " },\n";
 
 		out << "      \"user_raw\": { \"frequency_hz\": ";
 		WriteOptionalNumber(out, rf.rawFreqHz, hasRaw);
-		out << ", \"note\": \"" << JsonEscape(hasRaw ? rawNote : std::string("---"))
-			<< "\", \"midi\": " << (hasRaw ? rawMidi : 0)
-			<< ", \"confidence\": ";
-		WriteOptionalNumber(out, rf.confidence, std::isfinite(rf.confidence), 3);
+		out << ", \"note\": \"" << JsonEscape(rawNote)
+			<< "\", \"midi\": ";
+		if (hasRaw) out << rawMidi; else out << "null";
+		out << ", \"confidence\": ";
+		WriteOptionalNumber(out, rf.confidence, hasRaw && std::isfinite(rf.confidence), 3);
 		out << ", \"voiced\": " << (hasRaw ? "true" : "false") << " },\n";
 
-		out << "      \"correction\": { \"autotune_semitones\": ";
+		out << "      \"correction\": { \"semitones\": ";
+		WriteOptionalNumber(out, rf.correctionSemitones, hasCorrection, 3);
+		out << ", \"cents\": ";
+		WriteOptionalNumber(out, rf.correctionSemitones * 100.0, hasCorrection, 2);
+		out << ", \"autotune_semitones\": ";
 		WriteOptionalNumber(out, rf.correctionSemitones, hasCorrection, 3);
 		out << ", \"autotune_cents\": ";
 		WriteOptionalNumber(out, rf.correctionSemitones * 100.0, hasCorrection, 2);
@@ -271,17 +290,20 @@ bool VoiceComparison::GenerateComparisonReport(
 
 		out << "      \"expected_corrected\": { \"frequency_hz\": ";
 		WriteOptionalNumber(out, expectedHz, hasExpected);
-		out << ", \"midi\": " << (hasExpected ? expectedMidi : 0)
-			<< ", \"note\": \"" << JsonEscape(hasExpected ? MidiToNoteName(expectedMidi) : std::string("---"))
+		out << ", \"midi\": ";
+		if (hasExpected) out << expectedMidi; else out << "null";
+		out << ", \"note\": \"" << JsonEscape(hasExpected ? MidiToNoteName(expectedMidi) : std::string("---"))
 			<< "\" },\n";
 
 		out << "      \"final_processed_voice\": { \"frequency_hz\": ";
 		WriteOptionalNumber(out, actualFinalHz, hasFinal);
 		out << ", \"note\": \"" << JsonEscape(finalNote)
-			<< "\", \"midi\": " << finalMidi
-			<< ", \"confidence\": ";
-		WriteOptionalNumber(out, hasFinal ? (rf.finalConfidence > 0.0f ? rf.finalConfidence : rf.confidence) : 0.0, hasFinal, 3);
-		out << ", \"voiced\": " << (hasFinal ? "true" : "false") << " },\n";
+			<< "\", \"midi\": ";
+		if (hasFinal) out << finalMidi; else out << "null";
+		out << ", \"confidence\": ";
+		WriteOptionalNumber(out, rf.finalConfidence, hasFinal && std::isfinite(rf.finalConfidence), 3);
+		out << ", \"voiced\": " << (hasFinal ? "true" : "false")
+			<< ", \"measured\": " << (hasFinal ? "true" : "false") << " },\n";
 
 		out << "      \"comparison\": { \"raw_error_hz\": ";
 		WriteOptionalNumber(out, rawErrorHz, rawCmp);
@@ -330,13 +352,33 @@ bool VoiceComparison::GenerateComparisonReport(
 	outSummary.worsenedFrames = worsenedFrames;
 	outSummary.unchangedFrames = unchangedFrames;
 
-	if (outSummary.validTargetFrames == 0) {
-		outSummary.error = "No voiced target frames overlapped the recording window "
+	int copiedFromTarget = 0;
+	for (const auto& rf : rawFrames) {
+		const TargetPitchFrame t = targetTimeline.GetTargetPitchAt(rf.timestampSec);
+		if (t.isVoiced && ValidHz(t.targetHz) && rf.voiced && ValidHz(rf.rawFreqHz)
+			&& std::abs(static_cast<double>(rf.rawFreqHz) - t.targetHz) < 0.05)
+			++copiedFromTarget;
+	}
+
+	if (outSummary.validRawFrames == 0) {
+		outSummary.error = "Missing dataset: raw user frequency is zero/unvoiced for all frames "
+			"(microphone PitchDetector produced no voiced pitch).";
+	}
+	else if (outSummary.validTargetFrames == 0) {
+		outSummary.error = "Missing dataset: target data did not overlap the recording window "
 			"(recorded timestamps never aligned with the song's sung section).";
+	}
+	else if (outSummary.validFinalFrames == 0) {
+		outSummary.error = "Missing dataset: final processed voice frequency is zero/unvoiced for all frames "
+			"(processed-vocal monitor tap after pitch shift/effects did not measure pitch).";
 	}
 	else if (outSummary.validComparisons == 0) {
 		outSummary.error = "No valid comparisons: the microphone was not voiced at any timestamp that "
 			"had a voiced target. Sing during the vocal section of the song.";
+	}
+	else if (copiedFromTarget >= outSummary.validComparisons && outSummary.validComparisons >= 8) {
+		outSummary.error = "Invalid data: raw user frequency matches target frequency on every voiced frame "
+			"(target was copied into user pitch; report not shown).";
 	}
 
 	out << "  ],\n";
@@ -386,6 +428,9 @@ bool VoiceComparison::GenerateComparisonReport(
 	file << out.str();
 	file.close();
 
-	std::cout << "[Comparison] Report generated successfully with synchronized timestamps." << std::endl;
+	std::cout << "[Comparison] Target matches: " << targetMatches << std::endl;
+	std::cout << "[Comparison] Final processed frames: " << finalProcessedFrames << std::endl;
+	std::cout << "[Comparison] Report generated successfully" << std::endl;
+	std::cout << "[Comparison] JSON saved: " << outFilePath << std::endl;
 	return true;
 }

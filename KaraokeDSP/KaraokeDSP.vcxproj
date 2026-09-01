@@ -186,7 +186,7 @@
     <ClInclude Include="AudioIO\AudioBuffer.h" />
     <ClInclude Include="AudioIO\AudioDeviceManager.h" />
     <QtMoc Include="UI\PlayerWidget.h" />
-    <ClInclude Include="AudioIO\AudioStream.h" />
+    <QtMoc Include="AudioIO\AudioStream.h" />
     <ClInclude Include="AudioIO\PerformanceAnalyzer.h" />
     <ClInclude Include="AudioIO\PitchComparisonEngine.h" />
     <ClInclude Include="AudioIO\PitchMetrics.h" />
@@ -197,6 +197,7 @@
     <ClInclude Include="AudioIO\UserVoiceAnalyzer.h" />
     <ClInclude Include="AudioIO\VoiceComparison.h" />
     <ClInclude Include="AudioIO\WavWriter.h" />
+    <ClInclude Include="DSP\AirSheenFilter.h" />
     <ClInclude Include="DSP\AudioMixer.h" />
     <ClInclude Include="DSP\BeatDetector.h" />
     <ClInclude Include="DSP\Compressor.h" />
@@ -206,6 +207,8 @@
     <QtMoc Include="KaraokeDSPDashboard.h" />
     <ClInclude Include="DSP\PitchCorrector.h" />
     <ClInclude Include="DSP\ScaleLocker.h" />
+    <ClInclude Include="DSP\SlapbackDelay.h" />
+    <ClInclude Include="DSP\VocalDoubler.h" />
     <ClInclude Include="DSP\Vocalharmonicenhancer.h" />
     <ClInclude Include="DSP\VocalReverb.h" />
     <ClInclude Include="DSP\VocalSaturation.h" />

@@ -32,10 +32,10 @@
 #include <QHeaderView>
 #include <QDesktopServices>
 #include <QTextEdit>
-#include <QSplitter>
 #include "AudioDeviceManager.h"
 #include "AudioStream.h"
 #include "KeyDetector.h"
+#include "SongAnalyzer.h"
 
 // ============================================================================
 // DASHBOARD PITCH GRAPH IMPLEMENTATION
@@ -80,10 +80,10 @@ void DashboardPitchGraph::paintEvent(QPaintEvent* event) {
     painter.setPen(greenPen);
     for (int i = 0; i < tarHistory.size() - 1; ++i) {
         if (tarHistory[i] <= 0 || tarHistory[i + 1] <= 0) continue;
-        float x1 = static_cast<float>(i) * xStep;
-        float y1 = static_cast<float>(h) - ((tarHistory[i] - mMinFreq) / (mMaxFreq - mMinFreq)) * static_cast<float>(h);
-        float x2 = static_cast<float>(i + 1) * xStep;
-        float y2 = static_cast<float>(h) - ((tarHistory[i + 1] - mMinFreq) / (mMaxFreq - mMinFreq)) * static_cast<float>(h);
+        float x1 = i * xStep;
+        float y1 = h - ((tarHistory[i] - mMinFreq) / (mMaxFreq - mMinFreq)) * h;
+        float x2 = (i + 1) * xStep;
+        float y2 = h - ((tarHistory[i + 1] - mMinFreq) / (mMaxFreq - mMinFreq)) * h;
         painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
     }
 
@@ -92,10 +92,10 @@ void DashboardPitchGraph::paintEvent(QPaintEvent* event) {
     painter.setPen(redPen);
     for (int i = 0; i < inHistory.size() - 1; ++i) {
         if (inHistory[i] <= 0 || inHistory[i + 1] <= 0) continue;
-        float x1 = static_cast<float>(i) * xStep;
-        float y1 = static_cast<float>(h) - ((inHistory[i] - mMinFreq) / (mMaxFreq - mMinFreq)) * static_cast<float>(h);
-        float x2 = static_cast<float>(i + 1) * xStep;
-        float y2 = static_cast<float>(h) - ((inHistory[i + 1] - mMinFreq) / (mMaxFreq - mMinFreq)) * static_cast<float>(h);
+        float x1 = i * xStep;
+        float y1 = h - ((inHistory[i] - mMinFreq) / (mMaxFreq - mMinFreq)) * h;
+        float x2 = (i + 1) * xStep;
+        float y2 = h - ((inHistory[i + 1] - mMinFreq) / (mMaxFreq - mMinFreq)) * h;
         painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
     }
 }
@@ -142,7 +142,17 @@ KaraokeDSPDashboard::KaraokeDSPDashboard(QWidget* parent) : QMainWindow(parent) 
     tabLay->addStretch();
     mainLay->addLayout(tabLay);
 
-    // 1. Top Bar Elements (Video Path & Action Buttons)
+    videoWidget = new QVideoWidget();
+    videoWidget->setMinimumHeight(180);
+    videoWidget->setMaximumHeight(200);
+    videoWidget->setStyleSheet("background:#000; border-radius:8px; border:1px solid #1f2937;");
+
+    m_player = new QMediaPlayer(this);
+    m_player->setVideoOutput(videoWidget);
+    m_player->setAudioOutput(nullptr);
+
+    mainLay->addWidget(videoWidget);
+
     QHBoxLayout* pathLay = new QHBoxLayout();
     videoPathLabel = new QLabel("Select Karaoke Video...", this);
     videoPathLabel->setStyleSheet("background:#1a1e2b; padding:6px; border-radius:6px; color:#64748b; font-size:11px;");
@@ -151,20 +161,21 @@ KaraokeDSPDashboard::KaraokeDSPDashboard(QWidget* parent) : QMainWindow(parent) 
     QPushButton* playBtn = new QPushButton("PLAY", this);
     playBtn->setStyleSheet("background:#3a86ff; color:white; font-weight:bold; min-width:80px; padding:6px;");
     QPushButton* stopBtn = new QPushButton("STOP", this);
+
+    // Fix shadowing warning by using local distinct name before member assignment
+    QPushButton* recordMicButton = new QPushButton("Record Mic", this);
+    recordMicButton->setCheckable(true);
+    recordMicButton->setStyleSheet("background:#f59e0b; color:#000; font-weight:bold; padding:6px; border-radius:6px;");
+    this->recordMicBtn = recordMicButton;
+
     stopBtn->setFixedWidth(70);
-
-    QPushButton* recordMicBtnLocal = new QPushButton("Record Mic", this);
-    recordMicBtnLocal->setCheckable(true);
-    recordMicBtnLocal->setStyleSheet("background:#f59e0b; color:#000; font-weight:bold; padding:6px; border-radius:6px;");
-    this->recordMicBtn = recordMicBtnLocal;
-
     pathLay->addWidget(videoPathLabel, 1);
     pathLay->addWidget(browseBtn);
     pathLay->addWidget(playBtn);
-    pathLay->addWidget(recordMicBtnLocal);
+    pathLay->addWidget(recordMicButton);
     pathLay->addWidget(stopBtn);
+    mainLay->addLayout(pathLay);
 
-    // 2. Video Progress & Seek Bar
     QHBoxLayout* videoSeekLay = new QHBoxLayout();
     timeLabel = new QLabel("00:00 / 00:00", this);
     timeLabel->setStyleSheet("color:#3a86ff; font-size:11px; background:transparent; border:none; min-width:90px;");
@@ -174,8 +185,11 @@ KaraokeDSPDashboard::KaraokeDSPDashboard(QWidget* parent) : QMainWindow(parent) 
     videoProgressSlider->setStyleSheet("QSlider::groove:horizontal{height:6px; background:#1f2333; border-radius:3px;} QSlider::handle:horizontal{background:#3a86ff; width:12px; height:12px; border-radius:6px; margin:-3px 0;} QSlider::sub-page:horizontal{background:#3a86ff; border-radius:3px;}");
     videoSeekLay->addWidget(timeLabel);
     videoSeekLay->addWidget(videoProgressSlider, 1);
+    mainLay->addLayout(videoSeekLay);
 
-    // 3. Hardware Routing Panel
+    QHBoxLayout* bottomLay = new QHBoxLayout();
+    bottomLay->setSpacing(10);
+
     QGroupBox* routingGroup = new QGroupBox("HARDWARE ROUTING & KEY CONTROL", this);
     QVBoxLayout* routingLay = new QVBoxLayout(routingGroup);
     routingLay->setSpacing(10);
@@ -264,7 +278,6 @@ KaraokeDSPDashboard::KaraokeDSPDashboard(QWidget* parent) : QMainWindow(parent) 
     routingLay->addWidget(hint);
     routingLay->addStretch();
 
-    // 4. Master Output Panel
     QGroupBox* reportGroup = new QGroupBox("MASTER OUTPUT - LIVE PROCESSED MONITOR", this);
     QVBoxLayout* reportLay = new QVBoxLayout(reportGroup);
     reportLay->setSpacing(8);
@@ -319,63 +332,9 @@ KaraokeDSPDashboard::KaraokeDSPDashboard(QWidget* parent) : QMainWindow(parent) 
     comparisonStatusLabel->setStyleSheet("color:#64748b; font-size:11px; background:transparent; border:none;");
     reportLay->addWidget(comparisonStatusLabel);
 
-    // 5. Bottom Horizontal Layout (Routing + Report Panels Side-by-Side)
-    QHBoxLayout* bottomLay = new QHBoxLayout();
-    bottomLay->setSpacing(10);
     bottomLay->addWidget(routingGroup, 2);
     bottomLay->addWidget(reportGroup, 3);
-   
-    // 6. Setup Vertical Splitter (Up/Down Resizable Video Screen)
-    QSplitter* mainSplitter = new QSplitter(Qt::Vertical, this);
-    mainSplitter->setStyleSheet(
-        "QSplitter::handle:vertical {"
-        "   background-color: #3a86ff;"
-        "   height: 6px;"
-        "   margin: 1px 0px;"
-        "   border-radius: 3px;"
-        "}"
-        "QSplitter::handle:vertical:hover {"
-        "   background-color: #60a5fa;"
-        "}"
-    );
-
-    // Video Screen - Expand policy maximum rakhein
-    videoWidget = new QVideoWidget(this);
-    videoWidget->setMinimumHeight(0);
-    videoWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    videoWidget->setStyleSheet("background:#000; border-radius:8px; border:1px solid #1f2937;");
-
-    m_player = new QMediaPlayer(this);
-    m_player->setVideoOutput(videoWidget);
-    m_player->setAudioOutput(nullptr);
-
-    // Bottom Controls Container Widget
-    QWidget* bottomControlsWidget = new QWidget(this);
-    QVBoxLayout* controlsLayout = new QVBoxLayout(bottomControlsWidget);
-    controlsLayout->setContentsMargins(0, 0, 0, 0);
-    controlsLayout->setSpacing(8);
-
-    controlsLayout->addLayout(pathLay);
-    controlsLayout->addLayout(videoSeekLay);
-    controlsLayout->addLayout(bottomLay, 1);
-
-    // Bottom widget ko fully shrinkable banayein
-    bottomControlsWidget->setMinimumHeight(0);
-    bottomControlsWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
-
-    // Add Video & Controls to Splitter
-    mainSplitter->addWidget(videoWidget);
-    mainSplitter->addWidget(bottomControlsWidget);
-
-    // Both panels can collapse/expand completely
-    mainSplitter->setCollapsible(0, true);
-    mainSplitter->setCollapsible(1, true);
-
-    // Video frame height ko priority setup karein
-    mainSplitter->setStretchFactor(0, 4); // Video section primary stretch
-    mainSplitter->setStretchFactor(1, 1); // Controls secondary stretch
-
-    mainLay->addWidget(mainSplitter, 1);
+    mainLay->addLayout(bottomLay, 1);
 
     // CONNECTIONS SECTION
     connect(browseBtn, &QPushButton::clicked, this, [this]() {
@@ -530,7 +489,7 @@ KaraokeDSPDashboard::~KaraokeDSPDashboard() {
 }
 
 // ============================================================================
-// IMPLEMENTATION OF MISSING REPORT SLOTS
+// IMPLEMENTATION OF MISSING REPORT SLOTS (FIXES UNRESOLVED EXTERNAL SYMBOLS)
 // ============================================================================
 void KaraokeDSPDashboard::onComparisonReportReady(bool success, const QString& jsonPath, const QString& message) {
     if (success) {
@@ -542,6 +501,7 @@ void KaraokeDSPDashboard::onComparisonReportReady(bool success, const QString& j
         }
     }
     else {
+        // P7: surface the exact reason so the user knows why no report was produced.
         if (viewComparisonBtn) viewComparisonBtn->setEnabled(false);
         if (openComparisonJsonBtn) openComparisonJsonBtn->setEnabled(false);
         const QString reason = message.isEmpty() ? QString("Failed to generate comparison report.") : message;
@@ -564,10 +524,10 @@ void KaraokeDSPDashboard::showVoiceComparisonReport() {
         return;
     }
 
-    QByteArray dataJson = file.readAll();
+    QByteArray data = file.readAll();
     file.close();
 
-    QJsonDocument doc = QJsonDocument::fromJson(dataJson);
+    QJsonDocument doc = QJsonDocument::fromJson(data);
     if (doc.isNull() || !doc.isObject()) {
         QMessageBox::warning(this, "Error", "Invalid report format.");
         return;
@@ -903,13 +863,17 @@ void KaraokeDSPDashboard::setupVocalsDecoder() {
             mTargetLoadedFromExistingCache = true;
             std::cout << "[TargetDebug] Target applied from " << src << ": voiced=" << voiced
                 << " / " << mTargetTimeline.GetFrameCount() << " frames; melody correction enabled." << std::endl;
-            };
+        };
 
+        // 1) Preferred: analyze the isolated vocal stem (cleanest pitch signal).
         if (!mVocalsSamplesForAnalysis.empty()) {
             TargetPitchTimeline analyzedTimeline;
             bool ok = SongAnalyzer::LoadOrAnalyzeSong(
                 analyzedTimeline,
-                mLoadedSongPath.toStdString(),
+                mLoadedSongPath.toStdString(), // FIX: was mVocalsFilePath ("vocals.wav") — caused cache files
+                                                // to be named "vocals_vocals_<hash>.json" instead of
+                                                // "<SongName>_vocals_<hash>.json", making them indistinguishable
+                                                // between different songs and triggering wrong-song cache loads.
                 mVocalsSamplesForAnalysis,
                 mVocalsSampleRateForAnalysis,
                 true
@@ -920,12 +884,15 @@ void KaraokeDSPDashboard::setupVocalsDecoder() {
                 applyTimeline(analyzedTimeline, "vocal stem");
                 return;
             }
-            std::cout << "[TargetDebug] Vocal-stem analysis produced no voiced target; falling back to full-song audio." << std::endl;
+            std::cout << "[TargetDebug] Vocal-stem analysis produced no voiced target (silent/failed stem); "
+                "falling back to full-song audio." << std::endl;
         }
         else {
             std::cout << "[TargetDebug] No vocal-stem samples decoded; falling back to full-song audio." << std::endl;
         }
 
+        // 2) Fallback: analyze the full-song audio. Less clean than an isolated stem but produces REAL pitch
+        //    data (never fabricated) and is far better than an empty target when demucs yields a silent stem.
         if (!mFullSongSamplesForAnalysis.empty()) {
             TargetPitchTimeline fullTimeline;
             bool ok2 = SongAnalyzer::LoadOrAnalyzeSong(
@@ -941,7 +908,8 @@ void KaraokeDSPDashboard::setupVocalsDecoder() {
                 applyTimeline(fullTimeline, "full-song fallback");
                 return;
             }
-            std::cout << "[TargetDebug] Full-song fallback also produced no voiced target." << std::endl;
+            std::cout << "[TargetDebug] Full-song fallback also produced no voiced target; "
+                "no valid target available for this song." << std::endl;
         }
         else {
             std::cout << "[TargetDebug] No full-song samples available for fallback analysis." << std::endl;
@@ -958,72 +926,74 @@ void KaraokeDSPDashboard::setupSongDecoder(const QString& filePath) {
     m_songDecoder->start();
 }
 
-void KaraokeDSPDashboard::onDecoderBufferReady()
-{
+void KaraokeDSPDashboard::onDecoderBufferReady() {
     if (!m_songDecoder || !mAudioStream) return;
 
-    while (m_songDecoder->bufferAvailable()) {
-        QAudioBuffer buffer = m_songDecoder->read();
-        if (!buffer.isValid()) continue;
+    QAudioBuffer buffer = m_songDecoder->read();
+    if (!buffer.isValid()) return;
 
-        const int sampleCount = buffer.sampleCount();
-        const int channelCount = buffer.format().channelCount();
-        const auto sampleFormat = buffer.format().sampleFormat();
+    int sampleCount = buffer.sampleCount();
+    int channelCount = buffer.format().channelCount();
+    auto sampleFormat = buffer.format().sampleFormat();
 
-        if (sampleCount <= 0) continue;
+    if (sampleCount <= 0) return;
 
-        mSongSampleRateForAnalysis = buffer.format().sampleRate();
+    if (sampleFormat == QAudioFormat::Float) {
+        const float* pcmData = buffer.constData<float>();
+        if (!pcmData) return;
 
-        if (sampleFormat == QAudioFormat::Float) {
-            const float* pcmData = buffer.constData<float>();
-            if (!pcmData) continue;
+        mAudioStream->pushSongBuffer(pcmData, sampleCount);
 
-            mAudioStream->pushSongBuffer(pcmData, sampleCount);
-
-            if (channelCount == 2) {
-                const int frameCount = sampleCount / 2;
-                const size_t oldSize = mFullSongSamplesForAnalysis.size();
-                mFullSongSamplesForAnalysis.resize(oldSize + frameCount);
-                float* dst = mFullSongSamplesForAnalysis.data() + oldSize;
-
-                for (int i = 0; i < frameCount; ++i) {
-                    dst[i] = (pcmData[i * 2] + pcmData[i * 2 + 1]) * 0.5f;
-                }
-            }
-            else {
-                mFullSongSamplesForAnalysis.insert(mFullSongSamplesForAnalysis.end(), pcmData, pcmData + sampleCount);
-            }
-        }
-        else if (sampleFormat == QAudioFormat::Int16) {
-            const qint16* pcmData16 = buffer.constData<qint16>();
-            if (!pcmData16) continue;
-
-            std::vector<float> tempFloat(sampleCount);
-            constexpr float normFactor = 1.0f / 32768.0f;
-            for (int i = 0; i < sampleCount; ++i) {
-                tempFloat[i] = static_cast<float>(pcmData16[i]) * normFactor;
-            }
-
-            mAudioStream->pushSongBuffer(tempFloat.data(), sampleCount);
-
-            if (channelCount == 2) {
-                const int frameCount = sampleCount / 2;
-                const size_t oldSize = mFullSongSamplesForAnalysis.size();
-                mFullSongSamplesForAnalysis.resize(oldSize + frameCount);
-                float* dst = mFullSongSamplesForAnalysis.data() + oldSize;
-
-                for (int i = 0; i < frameCount; ++i) {
-                    dst[i] = (tempFloat[i * 2] + tempFloat[i * 2 + 1]) * 0.5f;
-                }
-            }
-            else {
-                mFullSongSamplesForAnalysis.insert(mFullSongSamplesForAnalysis.end(), tempFloat.begin(), tempFloat.end());
+        // PERFORMANCE FIX: mFullSongSamplesForAnalysis is only needed to feed a fresh
+        // SongAnalyzer pass. When the target pitch was already loaded from an existing
+        // cache file, no fresh analysis will run -- so accumulating every decoded buffer
+        // into this ever-growing vector on the GUI thread, DURING live playback, was pure
+        // wasted work competing with the 10ms audio timer on the same thread (a likely
+        // cause of the periodic song-audio cracking/stutter).
+        if (!mTargetLoadedFromExistingCache) {
+        if (channelCount == 2) {
+            int frameCount = sampleCount / 2;
+            for (int i = 0; i < frameCount; ++i) {
+                float monoSample = (pcmData[i * 2] + pcmData[i * 2 + 1]) * 0.5f;
+                mFullSongSamplesForAnalysis.push_back(monoSample);
             }
         }
         else {
-            std::cout << "[Decoder] Unsupported sample format or size; skipping buffer" << std::endl;
+            mFullSongSamplesForAnalysis.insert(mFullSongSamplesForAnalysis.end(), pcmData, pcmData + sampleCount);
+        }
         }
     }
+    else if (sampleFormat == QAudioFormat::Int16) {
+        const qint16* pcmData16 = buffer.constData<qint16>();
+        if (!pcmData16) return;
+
+        std::vector<float> tempFloat;
+        tempFloat.reserve(sampleCount);
+        for (int i = 0; i < sampleCount; ++i) {
+            tempFloat.push_back(static_cast<float>(pcmData16[i]) / 32768.0f);
+        }
+
+        mAudioStream->pushSongBuffer(tempFloat.data(), sampleCount);
+
+        if (!mTargetLoadedFromExistingCache) {
+        if (channelCount == 2) {
+            int frameCount = sampleCount / 2;
+            for (int i = 0; i < frameCount; ++i) {
+                float monoSample = (tempFloat[i * 2] + tempFloat[i * 2 + 1]) * 0.5f;
+                mFullSongSamplesForAnalysis.push_back(monoSample);
+            }
+        }
+        else {
+            mFullSongSamplesForAnalysis.insert(mFullSongSamplesForAnalysis.end(), tempFloat.begin(), tempFloat.end());
+        }
+        }
+    }
+    else {
+        std::cout << "[Decoder] Unsupported sample format or size; skipping buffer" << std::endl;
+        return;
+    }
+
+    mSongSampleRateForAnalysis = buffer.format().sampleRate();
 }
 
 void KaraokeDSPDashboard::isolateVocalsFromSong(const QString& songPath) {
