@@ -89,6 +89,7 @@ public:
     void SetSongPath(const std::string& path);
     void SetSongPlaybackPosition(double positionSeconds);
     void SetCorrectionStrength(float strength);
+    void SetCorrectionWetMix(float wetMix); // 0.0 = fully dry/uncorrected, 1.0 = fully corrected
     void EnableMelodyCorrection(bool enable);
 
     void EnableReverb(bool enable);
@@ -157,6 +158,7 @@ private:
     double m_songPosition = 0.0;                 // coarse QMediaPlayer video position
     uint64_t m_playbackClockFrames = 0;          // sample-accurate audio clock
     float m_correctionStrength = 1.0f;
+    float m_correctionWetMix = 0.85f; // dry/wet blend: 0.85 = 85% corrected + 15% original
     bool m_melodyCorrectionEnabled = false;
     float m_currentCorrectionSemitones = 0.0f;
     float m_smoothedCorrectionSemitones = 0.0f;

@@ -62,14 +62,14 @@ AudioStream::AudioStream(QObject* parent)
     m_earphoneVolume = 1.0f;
 
     // Balanced Reverb Space (14% Mix)
-    m_reverbMix = 0.14f;
+    m_reverbMix = 0.22f;
 
     // Smooth Vocal Compressor (Gentle Glue)
-    m_compressor.SetThreshold(-16.0f);
-    m_compressor.SetRatio(2.2f);
+    m_compressor.SetThreshold(-18.0f);
+    m_compressor.SetRatio(3.0f);
     m_compressor.SetAttack(12.0f);
     m_compressor.SetRelease(100.0f);
-    m_compressor.SetMakeupGain(2.5f);
+    m_compressor.SetMakeupGain(3.5f);
 
     // Warm & Sweet Harmonic Exciter
     m_harmonicEnhancer.SetExciterMix(0.15f);
@@ -217,13 +217,13 @@ AudioStream::AudioStream(int sampleRate, int bufferSize, QObject* parent)
     m_micVolume = 1.0f;
     m_speakerVolume = 1.0f;
     m_earphoneVolume = 1.0f;
-    m_reverbMix = 0.14f;
+    m_reverbMix = 0.22f;
 
-    m_compressor.SetThreshold(-16.0f);
-    m_compressor.SetRatio(2.2f);
+    m_compressor.SetThreshold(-18.0f);
+    m_compressor.SetRatio(3.0f);
     m_compressor.SetAttack(12.0f);
     m_compressor.SetRelease(100.0f);
-    m_compressor.SetMakeupGain(2.5f);
+    m_compressor.SetMakeupGain(3.5f);
 
     m_harmonicEnhancer.SetExciterMix(0.15f);
     m_harmonicEnhancer.SetSaturationDrive(1.04f);
@@ -450,13 +450,25 @@ void AudioStream::processAudio() {
     }
 
     float correctionSemitones = 0.0f;
-    if (micPitchHz > 0.0f && targetPitchHz > 0.0f && micConfidence > 0.45f && !isConsonant) {
+    if (micPitchHz > 60.0f && micConfidence > 0.40f && !isConsonant) {
         auto hzToMidi = [](float hz) -> float {
             return 69.0f + 12.0f * std::log2(hz / 440.0f);
             };
         float userPitchMidi = hzToMidi(micPitchHz);
-        float targetPitchMidiRaw = hzToMidi(targetPitchHz);
-        float targetNoteMidi = std::round(targetPitchMidiRaw);
+        float targetNoteMidi;
+        if (targetPitchHz > 60.0f) {
+            // Mode 1: song's target-pitch timeline is available -- correct toward the
+            // original singer's actual note (existing behavior).
+            targetNoteMidi = std::round(hzToMidi(targetPitchHz));
+        }
+        else {
+            // Mode 2 (CHROMATIC FALLBACK): no target timeline data at this instant
+            // (song not loaded / timeline gap) -- instead of leaving correction fully
+            // off (which is what made the voice sound "flat"/uncorrected), snap toward
+            // the nearest chromatic semitone to the singer's own pitch. This keeps
+            // singing in-tune with itself even without a reference target.
+            targetNoteMidi = std::round(userPitchMidi);
+        }
 
         float rawError = targetNoteMidi - userPitchMidi;
         float errorSemitones = rawError - 12.0f * std::round(rawError / 12.0f);
@@ -479,7 +491,7 @@ void AudioStream::processAudio() {
         correctionSemitones = std::clamp(correctionSemitones, -12.0f, 12.0f);
 
         // Responsive retune speed (0.50f)
-        constexpr float kSmoothingCoeff = 0.50f;
+        constexpr float kSmoothingCoeff = 0.65f;
         m_smoothedCorrectionSemitones = m_smoothedCorrectionSemitones * (1.0f - kSmoothingCoeff) + correctionSemitones * kSmoothingCoeff;
         m_currentCorrectionSemitones = m_smoothedCorrectionSemitones;
     }
@@ -495,6 +507,17 @@ void AudioStream::processAudio() {
     // Continuous Pitch Shifter
     m_pitchShifter.SetPitchSemitones(appliedSemitones);
     m_pitchShifter.Process(monoInput.data(), outputBuffer.data(), framesRead);
+
+    // DRY/WET BLEND: real studio vocal correction is rarely 100% "wet" (fully
+    // corrected) -- blending in some of the original (dry, uncorrected) signal keeps
+    // the singer's natural character/imperfections instead of sounding "obviously
+    // auto-tuned"/robotic. m_correctionWetMix is the corrected-signal proportion
+    // (e.g. 0.70 = 70% corrected + 30% original).
+    if (m_correctionWetMix < 0.999f) {
+        for (int i = 0; i < framesRead; ++i) {
+            outputBuffer[i] = outputBuffer[i] * m_correctionWetMix + monoInput[i] * (1.0f - m_correctionWetMix);
+        }
+    }
 
     // 1. Noise Gate
     {
@@ -517,7 +540,7 @@ void AudioStream::processAudio() {
     for (int i = 0; i < framesRead; ++i) {
         outputBuffer[i] = m_vocalEQ.Process(outputBuffer[i]);
         outputBuffer[i] = m_airSheen.Process(outputBuffer[i]);
-        outputBuffer[i] = m_vocalDoubler.Process(outputBuffer[i], m_sampleRate);
+        // VocalDoubler removed here -- was causing an unwanted "double voice" effect.
         outputBuffer[i] = m_slapbackDelay.Process(outputBuffer[i], 0.10f);
     }
 
@@ -697,6 +720,7 @@ void AudioStream::logDeviceInfo(const QAudioDevice& device, const QString& type)
 void AudioStream::SetTargetPitchTimeline(const TargetPitchTimeline* timeline) { m_targetTimeline = timeline; }
 void AudioStream::SetSongPlaybackPosition(double positionSeconds) { m_songPosition = positionSeconds; }
 void AudioStream::SetCorrectionStrength(float strength) { m_correctionStrength = std::clamp(strength, 0.0f, 1.0f); }
+void AudioStream::SetCorrectionWetMix(float wetMix) { m_correctionWetMix = std::clamp(wetMix, 0.0f, 1.0f); }
 void AudioStream::EnableMelodyCorrection(bool enable) { m_melodyCorrectionEnabled = enable; }
 void AudioStream::EnableReverb(bool enable) { m_reverbEnabled = enable; }
 void AudioStream::SetReverbMix(float mix) { m_reverbMix = std::clamp(mix, 0.0f, 1.0f); }
